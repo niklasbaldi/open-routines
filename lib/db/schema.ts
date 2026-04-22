@@ -21,6 +21,8 @@ export const routines = pgTable("routines", {
   isPaused: boolean("is_paused").notNull().default(false),
   maxSteps: integer("max_steps").notNull().default(25),
   timeoutSeconds: integer("timeout_seconds").notNull().default(300),
+  enableVault: boolean("enable_vault").notNull().default(false),
+  memoryJson: jsonb("memory_json"),
   notifyOnComplete: text("notify_on_complete"),
   webhookId: text("webhook_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
@@ -53,6 +55,7 @@ export const runs = pgTable(
     tokenUsage: jsonb("token_usage"),
     costEstimate: real("cost_estimate"),
     error: text("error"),
+    previousOutputText: text("previous_output_text"),
     triggeredBy: text("triggered_by", {
       enum: ["manual", "cron", "api", "webhook"],
     })

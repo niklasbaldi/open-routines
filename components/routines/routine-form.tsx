@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { integrationLabel } from "@/lib/integrations";
 
 const MODELS: Record<string, string[]> = {
@@ -46,6 +47,7 @@ interface RoutineFormProps {
     maxSteps: number;
     timeoutSeconds?: number;
     notifyOnComplete?: string | null;
+    enableVault?: boolean;
   };
 }
 
@@ -73,6 +75,9 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
   const [notifyOnComplete, setNotifyOnComplete] = useState(
     initial?.notifyOnComplete ?? ""
   );
+  const [enableVault, setEnableVault] = useState(
+    initial?.enableVault ?? false
+  );
 
   const cronSchedule =
     schedulePreset === "custom" ? customCron : schedulePreset || null;
@@ -91,6 +96,7 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
       maxSteps,
       timeoutSeconds,
       notifyOnComplete: notifyOnComplete || null,
+      enableVault,
     };
 
     if (mode === "create") {
@@ -202,6 +208,22 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
               {integrationLabel(slug)}
             </button>
           ))}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-3">
+        <Switch
+          checked={enableVault}
+          onCheckedChange={setEnableVault}
+          aria-label="Enable Quest-Vault access"
+        />
+        <div>
+          <label className="text-sm font-medium text-neutral-700">
+            Quest-Vault
+          </label>
+          <p className="text-xs text-neutral-400">
+            Let the agent read and write to your knowledge vault
+          </p>
         </div>
       </div>
 

@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       maxSteps: body.maxSteps ?? 25,
       timeoutSeconds: body.timeoutSeconds ?? 300,
       notifyOnComplete: body.notifyOnComplete ?? null,
+      enableVault: body.enableVault ?? false,
       webhookId: randomBytes(12).toString("base64url"),
     })
     .returning();

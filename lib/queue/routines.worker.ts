@@ -4,7 +4,7 @@ import { executeRoutine } from "@/lib/agent/executor";
 import { sendCompletionNotification } from "@/lib/agent/notify";
 import { db } from "@/lib/db/client";
 import { runs, routines } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 export function startRoutinesWorker() {
   const worker = new Worker(
@@ -39,6 +39,14 @@ export function startRoutinesWorker() {
         .set({ status: "running", startedAt: new Date() })
         .where(eq(runs.id, runId));
 
+      // Fetch previous run output for diff context
+      const [previousRun] = await db
+        .select({ outputText: runs.outputText })
+        .from(runs)
+        .where(eq(runs.routineId, routineId))
+        .orderBy(desc(runs.completedAt))
+        .limit(1);
+
       try {
         const result = await executeRoutine({
           routineId: routine.id,
@@ -48,6 +56,9 @@ export function startRoutinesWorker() {
           modelName: routine.modelName,
           integrations: routine.integrations as string[],
           maxSteps: routine.maxSteps,
+          enableVault: routine.enableVault,
+          memory: routine.memoryJson as Record<string, unknown> | null,
+          previousOutputText: previousRun?.outputText,
         });
 
         await db
@@ -61,6 +72,18 @@ export function startRoutinesWorker() {
             costEstimate: result.costEstimate,
           })
           .where(eq(runs.id, runId));
+
+        // Update routine memory with this run's summary
+        await db
+          .update(routines)
+          .set({
+            memoryJson: {
+              lastRunAt: new Date().toISOString(),
+              lastOutputPreview: result.outputText.slice(0, 1000),
+              totalRuns: ((routine.memoryJson as Record<string, unknown>)?.totalRuns as number ?? 0) + 1,
+            },
+          })
+          .where(eq(routines.id, routineId));
 
         if (routine.notifyOnComplete) {
           await sendCompletionNotification(

@@ -3,6 +3,7 @@ import { Composio } from "@composio/core";
 import { VercelProvider } from "@composio/vercel";
 import { getModel, estimateCost } from "./models";
 import { classifyRisk } from "./risk";
+import { vaultTools } from "./vault-tools";
 import { db } from "@/lib/db/client";
 import { runs, pendingConfirmations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -15,6 +16,9 @@ export interface ExecuteRoutineInput {
   modelName: string;
   integrations: string[];
   maxSteps: number;
+  enableVault?: boolean;
+  memory?: Record<string, unknown> | null;
+  previousOutputText?: string | null;
 }
 
 export interface StepLog {
@@ -139,15 +143,38 @@ export async function executeRoutine(
     toolkits: input.integrations,
   });
   const rawTools = await session.tools();
-  const tools = wrapToolsWithGuardrails(rawTools, input.runId);
 
+  // Merge Composio tools + vault tools if enabled
+  let allTools: ToolSet = { ...rawTools };
+  if (input.enableVault) {
+    allTools = { ...allTools, ...vaultTools } as ToolSet;
+  }
+
+  const tools = wrapToolsWithGuardrails(allTools, input.runId);
   const model = getModel(input.modelProvider, input.modelName);
   const steps: StepLog[] = [];
+
+  // Build system prompt with memory and diff context
+  let systemPrompt = input.prompt;
+
+  if (input.enableVault) {
+    systemPrompt += "\n\nYou have access to the Quest-Vault knowledge base via vault_read, vault_write, vault_list, and vault_search tools. Use these to read context and save insights.";
+  }
+
+  if (input.memory && Object.keys(input.memory).length > 0) {
+    systemPrompt += `\n\n## Memory from previous runs\n${JSON.stringify(input.memory, null, 2)}\n\nUse this context to provide incremental updates rather than repeating information. Highlight what's new or changed.`;
+  }
+
+  if (input.previousOutputText) {
+    systemPrompt += `\n\n## Previous run output (for reference)\n${input.previousOutputText.slice(0, 3000)}\n\nFocus on what has CHANGED since this previous output. Don't repeat unchanged information — highlight new items, resolved items, and differences.`;
+  }
+
+  systemPrompt += "\n\nBefore executing any tools, briefly state your plan (2-3 bullet points of what you'll do). Then proceed.";
 
   const result = await generateText({
     model,
     tools,
-    system: input.prompt,
+    system: systemPrompt,
     prompt: "Execute this routine now.",
     stopWhen: stepCountIs(input.maxSteps),
     onStepFinish({ stepNumber, toolCalls, toolResults, text, usage }) {
