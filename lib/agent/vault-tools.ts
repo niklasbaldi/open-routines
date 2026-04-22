@@ -67,7 +67,12 @@ export const vaultTools = {
         const existing = readFileSync(fullPath, "utf-8");
         writeFileSync(fullPath, existing + "\n" + content, "utf-8");
       } else {
-        writeFileSync(fullPath, content, "utf-8");
+        // Add provenance frontmatter for new files
+        const hasFrontmatter = content.trimStart().startsWith("---");
+        const tagged = hasFrontmatter
+          ? content.replace(/^---/, "---\nsource: open-routines")
+          : `---\nsource: open-routines\n---\n${content}`;
+        writeFileSync(fullPath, tagged, "utf-8");
       }
       return { success: true, path };
     },

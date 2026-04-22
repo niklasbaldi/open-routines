@@ -19,7 +19,7 @@ function appendVaultMemory(routineName: string, output: string) {
   const entry = `\n## ${date}\n\n${output.slice(0, 2000)}\n`;
 
   if (!existsSync(file)) {
-    const header = `---\ntags: [routine, memory]\n---\n# ${routineName} — Run Memory\n\nAuto-updated after each run.\n`;
+    const header = `---\ntags: [routine, memory]\nsource: open-routines\n---\n# ${routineName} — Run Memory\n\nAuto-updated after each run.\n`;
     appendFileSync(file, header + entry, "utf-8");
   } else {
     appendFileSync(file, entry, "utf-8");
@@ -77,6 +77,7 @@ export function startRoutinesWorker() {
           integrations: routine.integrations as string[],
           maxSteps: routine.maxSteps,
           enableVault: routine.enableVault,
+          enableQuestTasks: routine.enableQuestTasks,
           memory: routine.memoryJson as Record<string, unknown> | null,
           previousOutputText: previousRun?.outputText,
         });

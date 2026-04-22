@@ -37,6 +37,7 @@ export default async function EditRoutinePage({
           timeoutSeconds: routine.timeoutSeconds,
           notifyOnComplete: routine.notifyOnComplete,
           enableVault: routine.enableVault,
+          enableQuestTasks: routine.enableQuestTasks,
         }}
       />
     </div>

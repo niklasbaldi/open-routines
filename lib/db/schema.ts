@@ -22,6 +22,7 @@ export const routines = pgTable("routines", {
   maxSteps: integer("max_steps").notNull().default(25),
   timeoutSeconds: integer("timeout_seconds").notNull().default(300),
   enableVault: boolean("enable_vault").notNull().default(false),
+  enableQuestTasks: boolean("enable_quest_tasks").notNull().default(false),
   memoryJson: jsonb("memory_json"),
   notifyOnComplete: text("notify_on_complete"),
   webhookId: text("webhook_id"),

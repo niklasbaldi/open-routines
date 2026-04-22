@@ -24,6 +24,8 @@ export default function TemplatesPage() {
         integrations: t.integrations,
         cronSchedule: t.cronSchedule,
         maxSteps: t.maxSteps,
+        ...(t.enableVault && { enableVault: true }),
+        ...(t.enableQuestTasks && { enableQuestTasks: true }),
       }),
     });
     const routine = await res.json();

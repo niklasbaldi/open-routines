@@ -4,6 +4,7 @@ import { VercelProvider } from "@composio/vercel";
 import { getModel, estimateCost } from "./models";
 import { classifyRisk } from "./risk";
 import { vaultTools } from "./vault-tools";
+import { questTools } from "./quest-tools";
 import { db } from "@/lib/db/client";
 import { runs, pendingConfirmations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -17,6 +18,7 @@ export interface ExecuteRoutineInput {
   integrations: string[];
   maxSteps: number;
   enableVault?: boolean;
+  enableQuestTasks?: boolean;
   memory?: Record<string, unknown> | null;
   previousOutputText?: string | null;
 }
@@ -144,10 +146,13 @@ export async function executeRoutine(
   });
   const rawTools = await session.tools();
 
-  // Merge Composio tools + vault tools if enabled
+  // Merge Composio tools + custom tools if enabled
   let allTools: ToolSet = { ...rawTools };
   if (input.enableVault) {
     allTools = { ...allTools, ...vaultTools } as ToolSet;
+  }
+  if (input.enableQuestTasks) {
+    allTools = { ...allTools, ...questTools } as ToolSet;
   }
 
   const tools = wrapToolsWithGuardrails(allTools, input.runId);
@@ -159,6 +164,10 @@ export async function executeRoutine(
 
   if (input.enableVault) {
     systemPrompt += "\n\nYou have access to the Quest-Vault knowledge base via vault_read, vault_write, vault_list, and vault_search tools. Use these to read context and save insights. Your run output will also be automatically saved to Quest-Vault/Routines/<routine-name>/memory.md for long-term reference.";
+  }
+
+  if (input.enableQuestTasks) {
+    systemPrompt += "\n\nYou have access to Quest-Tasks (a personal task manager) via quest_list_tasks, quest_get_task, quest_create_task, quest_update_task, quest_list_goals, quest_list_habits, and quest_get_gamification tools. Use these to read the user's tasks, goals, habits, and productivity stats. When creating tasks, keep titles concise and actionable.";
   }
 
   if (input.memory && Object.keys(input.memory).length > 0) {

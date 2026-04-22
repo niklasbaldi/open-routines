@@ -48,6 +48,7 @@ interface RoutineFormProps {
     timeoutSeconds?: number;
     notifyOnComplete?: string | null;
     enableVault?: boolean;
+    enableQuestTasks?: boolean;
   };
 }
 
@@ -78,6 +79,9 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
   const [enableVault, setEnableVault] = useState(
     initial?.enableVault ?? false
   );
+  const [enableQuestTasks, setEnableQuestTasks] = useState(
+    initial?.enableQuestTasks ?? false
+  );
 
   const cronSchedule =
     schedulePreset === "custom" ? customCron : schedulePreset || null;
@@ -97,6 +101,7 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
       timeoutSeconds,
       notifyOnComplete: notifyOnComplete || null,
       enableVault,
+      enableQuestTasks,
     };
 
     if (mode === "create") {
@@ -211,19 +216,37 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        <Switch
-          checked={enableVault}
-          onCheckedChange={setEnableVault}
-          aria-label="Enable Quest-Vault access"
-        />
-        <div>
-          <label className="text-sm font-medium text-neutral-700">
-            Quest-Vault
-          </label>
-          <p className="text-xs text-neutral-400">
-            Let the agent read and write to your knowledge vault
-          </p>
+      <div className="space-y-3">
+        <div className="flex items-center gap-3">
+          <Switch
+            checked={enableVault}
+            onCheckedChange={setEnableVault}
+            aria-label="Enable Quest-Vault access"
+          />
+          <div>
+            <label className="text-sm font-medium text-neutral-700">
+              Quest-Vault
+            </label>
+            <p className="text-xs text-neutral-400">
+              Let the agent read and write to your knowledge vault
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Switch
+            checked={enableQuestTasks}
+            onCheckedChange={setEnableQuestTasks}
+            aria-label="Enable Quest-Tasks access"
+          />
+          <div>
+            <label className="text-sm font-medium text-neutral-700">
+              Quest-Tasks
+            </label>
+            <p className="text-xs text-neutral-400">
+              Let the agent read/create tasks, goals, habits, and gamification stats
+            </p>
+          </div>
         </div>
       </div>
 

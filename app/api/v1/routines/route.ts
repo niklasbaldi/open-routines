@@ -28,6 +28,7 @@ export async function POST(req: NextRequest) {
       timeoutSeconds: body.timeoutSeconds ?? 300,
       notifyOnComplete: body.notifyOnComplete ?? null,
       enableVault: body.enableVault ?? false,
+      enableQuestTasks: body.enableQuestTasks ?? false,
       webhookId: randomBytes(12).toString("base64url"),
     })
     .returning();
