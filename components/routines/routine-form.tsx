@@ -132,6 +132,9 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
 
       <div className="space-y-2">
         <label className="text-sm font-medium text-neutral-700">Prompt</label>
+        <p className="text-xs text-neutral-400">
+          Tell the agent exactly what to do. Be specific about what to read, what to produce, and what NOT to modify.
+        </p>
         <Textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
@@ -240,6 +243,9 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
             min={1}
             max={50}
           />
+          <p className="text-xs text-neutral-400">
+            Tool-call rounds before the agent stops
+          </p>
         </div>
       </div>
 
@@ -255,6 +261,9 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
             min={30}
             max={3600}
           />
+          <p className="text-xs text-neutral-400">
+            Cancelled if it runs longer than this
+          </p>
         </div>
 
         <div className="space-y-2">

@@ -63,7 +63,15 @@ export default async function DashboardPage() {
           </div>
         </div>
       ) : (
-        <RoutinesList routines={routinesWithRuns} />
+        <>
+          <RoutinesList routines={routinesWithRuns} />
+          {allRoutines.length < 3 && (
+            <div className="mt-6 px-4 py-3 rounded-md bg-neutral-50 border border-neutral-100 text-xs text-neutral-500">
+              Browse <Link href="/routines/templates" className="underline text-neutral-700">templates</Link> for
+              pre-built routines you can use right away.
+            </div>
+          )}
+        </>
       )}
     </div>
   );

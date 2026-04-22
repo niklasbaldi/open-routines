@@ -74,6 +74,9 @@ export default function SettingsPage() {
         )}
 
         <div className="space-y-2">
+          <p className="text-xs text-neutral-400">
+            Common keys: ANTHROPIC_API_KEY, OPENAI_API_KEY, COMPOSIO_API_KEY
+          </p>
           <Input
             placeholder="Key name (e.g. OPENAI_API_KEY)"
             value={newKey}

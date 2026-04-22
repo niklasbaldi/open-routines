@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Clock, Play } from "lucide-react";
+import { Clock } from "lucide-react";
 import { cronToHuman } from "@/lib/cron-display";
 import { integrationLabel } from "@/lib/integrations";
 
@@ -76,12 +76,6 @@ export function RoutineCard({
           </div>
         </Link>
         <div className="flex items-center gap-3 shrink-0">
-          <Link
-            href={`/routines/${id}`}
-            className="text-neutral-400 hover:text-neutral-900 transition-colors"
-          >
-            <Play className="h-4 w-4" />
-          </Link>
           <Switch
             checked={!isPaused}
             onCheckedChange={(checked) => onTogglePause(id, !checked)}

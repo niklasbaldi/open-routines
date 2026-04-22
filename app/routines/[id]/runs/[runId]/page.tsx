@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { db } from "@/lib/db/client";
-import { runs, pendingConfirmations } from "@/lib/db/schema";
+import { routines, runs, pendingConfirmations } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { Card } from "@/components/ui/card";
@@ -25,6 +25,14 @@ export default async function RunDetailPage({
     .limit(1);
 
   if (!run) notFound();
+
+  const [routine] = await db
+    .select({ name: routines.name })
+    .from(routines)
+    .where(eq(routines.id, id))
+    .limit(1);
+
+  const routineName = routine?.name ?? "Routine";
 
   const pending = await db
     .select()
@@ -56,14 +64,14 @@ export default async function RunDetailPage({
       <div className="text-xs text-neutral-400 mb-4">
         <Link href="/" className="hover:text-neutral-700 transition-colors">Routines</Link>
         <span className="mx-1.5">/</span>
-        <Link href={`/routines/${id}`} className="hover:text-neutral-700 transition-colors">Routine</Link>
+        <Link href={`/routines/${id}`} className="hover:text-neutral-700 transition-colors">{routineName}</Link>
         <span className="mx-1.5">/</span>
         <span className="text-neutral-600">Run</span>
       </div>
 
       <div className="flex items-center gap-3 mb-6">
         <RunStatusBadge status={run.status} />
-        <h1 className="text-lg font-semibold text-neutral-900">Run Detail</h1>
+        <h1 className="text-lg font-semibold text-neutral-900">{routineName} — Run</h1>
       </div>
 
       {pending.map((c) => (
