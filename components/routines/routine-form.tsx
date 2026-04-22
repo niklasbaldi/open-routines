@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card } from "@/components/ui/card";
+import { integrationLabel } from "@/lib/integrations";
 
 const MODELS: Record<string, string[]> = {
   anthropic: ["claude-sonnet-4-6", "claude-haiku-4-5", "claude-opus-4-6"],
@@ -184,18 +185,18 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
           Integrations
         </label>
         <div className="flex flex-wrap gap-2">
-          {INTEGRATIONS.map((name) => (
+          {INTEGRATIONS.map((slug) => (
             <button
-              key={name}
+              key={slug}
               type="button"
-              onClick={() => toggleIntegration(name)}
+              onClick={() => toggleIntegration(slug)}
               className={`px-3 py-1.5 text-xs rounded-md border transition-colors ${
-                selectedIntegrations.includes(name)
+                selectedIntegrations.includes(slug)
                   ? "border-neutral-900 bg-neutral-900 text-white"
                   : "border-neutral-200 text-neutral-600 hover:border-neutral-400"
               }`}
             >
-              {name}
+              {integrationLabel(slug)}
             </button>
           ))}
         </div>

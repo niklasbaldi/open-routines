@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { db } from "@/lib/db/client";
-import { routines } from "@/lib/db/schema";
-import { desc } from "drizzle-orm";
+import { routines, runs } from "@/lib/db/schema";
+import { desc, eq } from "drizzle-orm";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { RoutinesList } from "./routines-list";
@@ -13,6 +13,27 @@ export default async function DashboardPage() {
     .select()
     .from(routines)
     .orderBy(desc(routines.createdAt));
+
+  const latestRuns = await Promise.all(
+    allRoutines.map(async (r) => {
+      const [latest] = await db
+        .select({ status: runs.status, startedAt: runs.startedAt })
+        .from(runs)
+        .where(eq(runs.routineId, r.id))
+        .orderBy(desc(runs.startedAt))
+        .limit(1);
+      return { routineId: r.id, latest };
+    })
+  );
+
+  const routinesWithRuns = allRoutines.map((r) => {
+    const entry = latestRuns.find((lr) => lr.routineId === r.id);
+    return {
+      ...r,
+      lastRunStatus: entry?.latest?.status ?? null,
+      lastRunAt: entry?.latest?.startedAt?.toISOString() ?? null,
+    };
+  });
 
   return (
     <div>
@@ -27,12 +48,22 @@ export default async function DashboardPage() {
       </div>
 
       {allRoutines.length === 0 ? (
-        <div className="text-center py-16 text-sm text-neutral-500">
-          <p>No routines yet.</p>
-          <p className="mt-1">Create one to get started.</p>
+        <div className="text-center py-16">
+          <p className="text-sm font-medium text-neutral-700">No routines yet.</p>
+          <p className="text-sm text-neutral-500 mt-1">
+            Get started by picking a template or creating your own.
+          </p>
+          <div className="flex items-center justify-center gap-3 mt-6">
+            <Link href="/routines/templates">
+              <Button variant="outline" size="sm">Browse Templates</Button>
+            </Link>
+            <Link href="/routines/new">
+              <Button size="sm">New Routine</Button>
+            </Link>
+          </div>
         </div>
       ) : (
-        <RoutinesList routines={allRoutines} />
+        <RoutinesList routines={routinesWithRuns} />
       )}
     </div>
   );

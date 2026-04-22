@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { db } from "@/lib/db/client";
 import { runs, pendingConfirmations } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -51,6 +52,14 @@ export default async function RunDetailPage({
   return (
     <div>
       {isActive && <RunPoller runId={runId} />}
+
+      <div className="text-xs text-neutral-400 mb-4">
+        <Link href="/" className="hover:text-neutral-700 transition-colors">Routines</Link>
+        <span className="mx-1.5">/</span>
+        <Link href={`/routines/${id}`} className="hover:text-neutral-700 transition-colors">Routine</Link>
+        <span className="mx-1.5">/</span>
+        <span className="text-neutral-600">Run</span>
+      </div>
 
       <div className="flex items-center gap-3 mb-6">
         <RunStatusBadge status={run.status} />

@@ -73,19 +73,17 @@ export default function SettingsPage() {
           </div>
         )}
 
-        <div className="flex gap-2">
+        <div className="space-y-2">
           <Input
             placeholder="Key name (e.g. OPENAI_API_KEY)"
             value={newKey}
             onChange={(e) => setNewKey(e.target.value)}
-            className="flex-1"
           />
           <Input
             type="password"
-            placeholder="Value"
+            placeholder="Secret value"
             value={newValue}
             onChange={(e) => setNewValue(e.target.value)}
-            className="flex-1"
           />
           <Button onClick={handleSave} disabled={saving} size="sm">
             Save

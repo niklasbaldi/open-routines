@@ -5,6 +5,8 @@ import { TEMPLATES } from "@/lib/templates";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Clock, Zap } from "lucide-react";
+import { cronToHuman } from "@/lib/cron-display";
+import { integrationLabel } from "@/lib/integrations";
 
 export default function TemplatesPage() {
   const router = useRouter();
@@ -51,10 +53,12 @@ export default function TemplatesPage() {
                   {t.cronSchedule && (
                     <span className="flex items-center gap-1">
                       <Clock className="h-3 w-3" />
-                      {t.cronSchedule}
+                      {cronToHuman(t.cronSchedule)}
                     </span>
                   )}
-                  <span>{t.integrations.join(", ")}</span>
+                  {t.integrations.length > 0 && (
+                    <span>{t.integrations.map(integrationLabel).join(", ")}</span>
+                  )}
                   <span>{t.modelName}</span>
                 </div>
               </div>

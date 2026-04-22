@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Clock, Play } from "lucide-react";
+import { cronToHuman } from "@/lib/cron-display";
+import { integrationLabel } from "@/lib/integrations";
 
 interface RoutineCardProps {
   id: string;
@@ -13,6 +15,25 @@ interface RoutineCardProps {
   modelName: string;
   integrations: string[];
   onTogglePause: (id: string, paused: boolean) => void;
+  lastRunStatus?: string | null;
+  lastRunAt?: string | null;
+}
+
+function StatusDot({ status }: { status: string | null | undefined }) {
+  if (!status) return <span className="inline-block w-2 h-2 rounded-full bg-neutral-300" />;
+  if (status === "completed") return <span className="inline-block w-2 h-2 rounded-full bg-green-500" />;
+  if (status === "failed") return <span className="inline-block w-2 h-2 rounded-full bg-red-500" />;
+  return <span className="inline-block w-2 h-2 rounded-full bg-neutral-300" />;
+}
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
 }
 
 export function RoutineCard({
@@ -23,6 +44,8 @@ export function RoutineCard({
   modelName,
   integrations,
   onTogglePause,
+  lastRunStatus,
+  lastRunAt,
 }: RoutineCardProps) {
   return (
     <Card className="p-4 hover:border-neutral-300 transition-colors">
@@ -35,12 +58,20 @@ export function RoutineCard({
             {cronSchedule && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {cronSchedule}
+                {cronToHuman(cronSchedule)}
               </span>
             )}
             <span>{modelName}</span>
             {integrations.length > 0 && (
-              <span>{(integrations as string[]).join(", ")}</span>
+              <span>{integrations.map(integrationLabel).join(", ")}</span>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 mt-1.5 text-xs text-neutral-400">
+            <StatusDot status={lastRunStatus} />
+            {lastRunAt ? (
+              <span>Last run {timeAgo(lastRunAt)}</span>
+            ) : (
+              <span>Never run</span>
             )}
           </div>
         </Link>

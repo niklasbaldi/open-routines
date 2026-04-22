@@ -10,6 +10,8 @@ interface Routine {
   isPaused: boolean;
   modelName: string;
   integrations: unknown;
+  lastRunStatus?: string | null;
+  lastRunAt?: string | null;
 }
 
 export function RoutinesList({ routines }: { routines: Routine[] }) {
@@ -36,6 +38,8 @@ export function RoutinesList({ routines }: { routines: Routine[] }) {
           modelName={r.modelName}
           integrations={r.integrations as string[]}
           onTogglePause={handleTogglePause}
+          lastRunStatus={r.lastRunStatus}
+          lastRunAt={r.lastRunAt}
         />
       ))}
     </div>
