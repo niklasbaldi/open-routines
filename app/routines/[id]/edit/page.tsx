@@ -34,6 +34,8 @@ export default async function EditRoutinePage({
           integrations: routine.integrations as string[],
           cronSchedule: routine.cronSchedule,
           maxSteps: routine.maxSteps,
+          timeoutSeconds: routine.timeoutSeconds,
+          notifyOnComplete: routine.notifyOnComplete,
         }}
       />
     </div>

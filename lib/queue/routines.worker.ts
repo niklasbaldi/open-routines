@@ -1,6 +1,7 @@
 import { Worker, Job } from "bullmq";
 import { connection } from "./connection";
 import { executeRoutine } from "@/lib/agent/executor";
+import { sendCompletionNotification } from "@/lib/agent/notify";
 import { db } from "@/lib/db/client";
 import { runs, routines } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
@@ -60,6 +61,17 @@ export function startRoutinesWorker() {
             costEstimate: result.costEstimate,
           })
           .where(eq(runs.id, runId));
+
+        if (routine.notifyOnComplete) {
+          await sendCompletionNotification(
+            routine.notifyOnComplete,
+            routine.name,
+            "completed",
+            result.outputText.slice(0, 500)
+          ).catch((err) =>
+            console.error("[Worker] Notification failed:", err.message)
+          );
+        }
       } catch (error) {
         await db
           .update(runs)
@@ -69,6 +81,15 @@ export function startRoutinesWorker() {
             error: error instanceof Error ? error.message : String(error),
           })
           .where(eq(runs.id, runId));
+
+        if (routine.notifyOnComplete) {
+          await sendCompletionNotification(
+            routine.notifyOnComplete,
+            routine.name,
+            "failed",
+            error instanceof Error ? error.message : String(error)
+          ).catch(() => {});
+        }
         throw error;
       }
     },

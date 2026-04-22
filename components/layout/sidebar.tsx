@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Settings, Zap } from "lucide-react";
+import { LayoutDashboard, Settings, Zap, BookTemplate } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const nav = [
   { href: "/", label: "Routines", icon: LayoutDashboard },
+  { href: "/routines/templates", label: "Templates", icon: BookTemplate },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 

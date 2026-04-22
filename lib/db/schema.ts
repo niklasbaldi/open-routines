@@ -20,6 +20,9 @@ export const routines = pgTable("routines", {
   cronSchedule: text("cron_schedule"),
   isPaused: boolean("is_paused").notNull().default(false),
   maxSteps: integer("max_steps").notNull().default(25),
+  timeoutSeconds: integer("timeout_seconds").notNull().default(300),
+  notifyOnComplete: text("notify_on_complete"),
+  webhookId: text("webhook_id"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow(),
 });
@@ -51,7 +54,7 @@ export const runs = pgTable(
     costEstimate: real("cost_estimate"),
     error: text("error"),
     triggeredBy: text("triggered_by", {
-      enum: ["manual", "cron", "api"],
+      enum: ["manual", "cron", "api", "webhook"],
     })
       .notNull()
       .default("manual"),

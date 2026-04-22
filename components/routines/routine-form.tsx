@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 const MODELS: Record<string, string[]> = {
   anthropic: ["claude-sonnet-4-6", "claude-haiku-4-5", "claude-opus-4-6"],
   openai: ["gpt-4o", "gpt-4o-mini"],
+  ollama: ["llama3.1", "llama3.2", "mistral", "qwen2.5", "gemma2"],
 };
 
 const INTEGRATIONS = ["gmail", "googlecalendar", "slack", "github", "notion"];
@@ -42,6 +43,8 @@ interface RoutineFormProps {
     integrations: string[];
     cronSchedule: string | null;
     maxSteps: number;
+    timeoutSeconds?: number;
+    notifyOnComplete?: string | null;
   };
 }
 
@@ -63,6 +66,12 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
   });
   const [customCron, setCustomCron] = useState(initial?.cronSchedule ?? "");
   const [maxSteps, setMaxSteps] = useState(initial?.maxSteps ?? 25);
+  const [timeoutSeconds, setTimeoutSeconds] = useState(
+    initial?.timeoutSeconds ?? 300
+  );
+  const [notifyOnComplete, setNotifyOnComplete] = useState(
+    initial?.notifyOnComplete ?? ""
+  );
 
   const cronSchedule =
     schedulePreset === "custom" ? customCron : schedulePreset || null;
@@ -79,6 +88,8 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
       integrations: selectedIntegrations,
       cronSchedule,
       maxSteps,
+      timeoutSeconds,
+      notifyOnComplete: notifyOnComplete || null,
     };
 
     if (mode === "create") {
@@ -146,6 +157,7 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
             <SelectContent>
               <SelectItem value="anthropic">Anthropic</SelectItem>
               <SelectItem value="openai">OpenAI</SelectItem>
+              <SelectItem value="ollama">Ollama (local)</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -227,6 +239,35 @@ export function RoutineForm({ mode, initial }: RoutineFormProps) {
             min={1}
             max={50}
           />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-neutral-700">
+            Timeout (seconds)
+          </label>
+          <Input
+            type="number"
+            value={timeoutSeconds}
+            onChange={(e) => setTimeoutSeconds(Number(e.target.value))}
+            min={30}
+            max={3600}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-neutral-700">
+            Notify on complete
+          </label>
+          <Input
+            value={notifyOnComplete}
+            onChange={(e) => setNotifyOnComplete(e.target.value)}
+            placeholder="gmail:you@example.com"
+          />
+          <p className="text-xs text-neutral-400">
+            Format: gmail:email or slack:#channel
+          </p>
         </div>
       </div>
 

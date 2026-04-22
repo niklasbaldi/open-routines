@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomBytes } from "crypto";
 import { db } from "@/lib/db/client";
 import { routines } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
@@ -24,6 +25,9 @@ export async function POST(req: NextRequest) {
       integrations: body.integrations ?? [],
       cronSchedule: body.cronSchedule ?? null,
       maxSteps: body.maxSteps ?? 25,
+      timeoutSeconds: body.timeoutSeconds ?? 300,
+      notifyOnComplete: body.notifyOnComplete ?? null,
+      webhookId: randomBytes(12).toString("base64url"),
     })
     .returning();
 
