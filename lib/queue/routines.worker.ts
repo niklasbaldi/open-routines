@@ -1,10 +1,30 @@
 import { Worker, Job } from "bullmq";
+import { existsSync, mkdirSync, appendFileSync } from "fs";
+import { join } from "path";
 import { connection } from "./connection";
 import { executeRoutine } from "@/lib/agent/executor";
 import { sendCompletionNotification } from "@/lib/agent/notify";
 import { db } from "@/lib/db/client";
 import { runs, routines } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
+
+const VAULT_ROOT = process.env.QUEST_VAULT_PATH ?? join(process.env.HOME ?? "", "Quest-Vault");
+
+function appendVaultMemory(routineName: string, output: string) {
+  const slug = routineName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const dir = join(VAULT_ROOT, "Routines", slug);
+  if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
+  const file = join(dir, "memory.md");
+  const date = new Date().toISOString().slice(0, 16).replace("T", " ");
+  const entry = `\n## ${date}\n\n${output.slice(0, 2000)}\n`;
+
+  if (!existsSync(file)) {
+    const header = `---\ntags: [routine, memory]\n---\n# ${routineName} — Run Memory\n\nAuto-updated after each run.\n`;
+    appendFileSync(file, header + entry, "utf-8");
+  } else {
+    appendFileSync(file, entry, "utf-8");
+  }
+}
 
 export function startRoutinesWorker() {
   const worker = new Worker(
@@ -73,7 +93,7 @@ export function startRoutinesWorker() {
           })
           .where(eq(runs.id, runId));
 
-        // Update routine memory with this run's summary
+        // Update DB memory (operational metadata)
         await db
           .update(routines)
           .set({
@@ -84,6 +104,15 @@ export function startRoutinesWorker() {
             },
           })
           .where(eq(routines.id, routineId));
+
+        // Write to Quest-Vault memory (browsable in Obsidian)
+        if (routine.enableVault) {
+          try {
+            appendVaultMemory(routine.name, result.outputText);
+          } catch (err) {
+            console.error("[Worker] Vault memory write failed:", (err as Error).message);
+          }
+        }
 
         if (routine.notifyOnComplete) {
           await sendCompletionNotification(

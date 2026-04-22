@@ -158,7 +158,7 @@ export async function executeRoutine(
   let systemPrompt = input.prompt;
 
   if (input.enableVault) {
-    systemPrompt += "\n\nYou have access to the Quest-Vault knowledge base via vault_read, vault_write, vault_list, and vault_search tools. Use these to read context and save insights.";
+    systemPrompt += "\n\nYou have access to the Quest-Vault knowledge base via vault_read, vault_write, vault_list, and vault_search tools. Use these to read context and save insights. Your run output will also be automatically saved to Quest-Vault/Routines/<routine-name>/memory.md for long-term reference.";
   }
 
   if (input.memory && Object.keys(input.memory).length > 0) {
