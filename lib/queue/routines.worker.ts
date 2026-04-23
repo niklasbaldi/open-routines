@@ -1,5 +1,5 @@
 import { Worker, Job } from "bullmq";
-import { existsSync, mkdirSync, appendFileSync } from "fs";
+import { existsSync, mkdirSync, appendFileSync, readFileSync } from "fs";
 import { join } from "path";
 import { connection } from "./connection";
 import { executeRoutine } from "@/lib/agent/executor";
@@ -8,15 +8,48 @@ import { db } from "@/lib/db/client";
 import { runs, routines } from "@/lib/db/schema";
 import { eq, desc } from "drizzle-orm";
 
+const VAULT_API_URL = process.env.QUEST_VAULT_API_URL;
+const VAULT_API_KEY = process.env.QUEST_VAULT_API_KEY;
 const VAULT_ROOT = process.env.QUEST_VAULT_PATH ?? join(process.env.HOME ?? "", "Quest-Vault");
+const useHttp = Boolean(VAULT_API_URL && VAULT_API_KEY);
 
-function appendVaultMemory(routineName: string, output: string) {
+async function appendVaultMemory(routineName: string, output: string) {
   const slug = routineName.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const path = `Routines/${slug}/memory.md`;
+  const date = new Date().toISOString().slice(0, 16).replace("T", " ");
+  const entry = `\n## ${date}\n\n${output.slice(0, 2000)}\n`;
+
+  if (useHttp) {
+    // Check if the file exists by trying to read it
+    const readRes = await fetch(
+      `${VAULT_API_URL}?action=read&path=${encodeURIComponent(path)}`,
+      { headers: { Authorization: `Bearer ${VAULT_API_KEY}` } }
+    );
+    const isNew = !readRes.ok;
+    const header = `---\ntags: [routine, memory]\nsource: open-routines\n---\n# ${routineName} — Run Memory\n\nAuto-updated after each run.\n`;
+    const content = isNew ? header + entry : entry;
+
+    await fetch(VAULT_API_URL!, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${VAULT_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        path,
+        content,
+        mode: isNew ? undefined : "append",
+        summary: `${routineName} run memory`,
+        tags: ["routine", "memory", "open-routines"],
+      }),
+    });
+    return;
+  }
+
+  // Filesystem fallback (local dev)
   const dir = join(VAULT_ROOT, "Routines", slug);
   if (!existsSync(dir)) mkdirSync(dir, { recursive: true });
   const file = join(dir, "memory.md");
-  const date = new Date().toISOString().slice(0, 16).replace("T", " ");
-  const entry = `\n## ${date}\n\n${output.slice(0, 2000)}\n`;
 
   if (!existsSync(file)) {
     const header = `---\ntags: [routine, memory]\nsource: open-routines\n---\n# ${routineName} — Run Memory\n\nAuto-updated after each run.\n`;
@@ -109,7 +142,7 @@ export function startRoutinesWorker() {
         // Write to Quest-Vault memory (browsable in Obsidian)
         if (routine.enableVault) {
           try {
-            appendVaultMemory(routine.name, result.outputText);
+            await appendVaultMemory(routine.name, result.outputText);
           } catch (err) {
             console.error("[Worker] Vault memory write failed:", (err as Error).message);
           }

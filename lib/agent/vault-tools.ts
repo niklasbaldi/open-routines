@@ -10,9 +10,28 @@ import {
 } from "fs";
 import { join, relative } from "path";
 
+// HTTP mode: calls Quest-Tasks integration API (for prod / Railway)
+const VAULT_API_URL = process.env.QUEST_VAULT_API_URL; // e.g. https://quest-tasks.up.railway.app/api/integration/vault
+const VAULT_API_KEY = process.env.QUEST_VAULT_API_KEY; // same as INTEGRATION_API_KEY on quest-tasks
+
+// Filesystem mode: direct local access (for local dev)
 const VAULT_ROOT =
   process.env.QUEST_VAULT_PATH ??
   join(process.env.HOME ?? "", "Quest-Vault");
+
+const useHttp = Boolean(VAULT_API_URL && VAULT_API_KEY);
+
+async function vaultFetch(url: string, init?: RequestInit): Promise<Response> {
+  const res = await fetch(url, {
+    ...init,
+    headers: {
+      ...init?.headers,
+      Authorization: `Bearer ${VAULT_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+  });
+  return res;
+}
 
 function resolveSafe(filePath: string): string {
   const resolved = join(VAULT_ROOT, filePath);
@@ -30,6 +49,17 @@ export const vaultTools = {
       path: z.string().describe("Relative path within Quest-Vault"),
     }),
     execute: async ({ path }: { path: string }) => {
+      if (useHttp) {
+        const res = await vaultFetch(
+          `${VAULT_API_URL}?action=read&path=${encodeURIComponent(path)}`
+        );
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          return { error: err.error ?? `Failed to read: ${path}` };
+        }
+        return await res.json();
+      }
+
       const fullPath = resolveSafe(path);
       if (!existsSync(fullPath)) {
         return { error: `File not found: ${path}` };
@@ -58,6 +88,24 @@ export const vaultTools = {
       content: string;
       mode: string;
     }) => {
+      if (useHttp) {
+        const res = await vaultFetch(VAULT_API_URL!, {
+          method: "POST",
+          body: JSON.stringify({
+            path,
+            content,
+            mode: mode === "append" ? "append" : undefined,
+            summary: `Updated by routine`,
+            tags: ["open-routines"],
+          }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          return { error: err.error ?? `Failed to write: ${path}` };
+        }
+        return { success: true, path };
+      }
+
       const fullPath = resolveSafe(path);
       const dir = fullPath.substring(0, fullPath.lastIndexOf("/"));
       if (!existsSync(dir)) {
@@ -88,6 +136,16 @@ export const vaultTools = {
         .describe("Relative directory path (empty for vault root)"),
     }),
     execute: async ({ path }: { path: string }) => {
+      if (useHttp) {
+        const params = path ? `?action=list&path=${encodeURIComponent(path)}` : "?action=list";
+        const res = await vaultFetch(`${VAULT_API_URL}${params}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          return { error: err.error ?? `Failed to list: ${path}` };
+        }
+        return await res.json();
+      }
+
       const fullPath = resolveSafe(path || "");
       if (!existsSync(fullPath)) {
         return { error: `Directory not found: ${path}` };
@@ -117,6 +175,17 @@ export const vaultTools = {
       query: string;
       directory: string;
     }) => {
+      if (useHttp) {
+        const params = new URLSearchParams({ action: "search", query });
+        if (directory) params.set("mode", directory);
+        const res = await vaultFetch(`${VAULT_API_URL}?${params}`);
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: res.statusText }));
+          return { error: err.error ?? `Search failed` };
+        }
+        return await res.json();
+      }
+
       const searchRoot = resolveSafe(directory || "");
       if (!existsSync(searchRoot)) {
         return { error: `Directory not found: ${directory}` };
